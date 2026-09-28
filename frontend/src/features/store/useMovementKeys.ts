@@ -13,7 +13,12 @@ const KEY_BINDINGS: Record<string, keyof MovementKeys> = {
   ArrowRight: "right",
 };
 
-const NONE_PRESSED: MovementKeys = { forward: false, back: false, left: false, right: false };
+export const NONE_PRESSED: MovementKeys = { forward: false, back: false, left: false, right: false };
+
+function isTyping(event: KeyboardEvent): boolean {
+  const target = event.target as HTMLElement | null;
+  return target?.tagName === "INPUT" || target?.tagName === "TEXTAREA";
+}
 
 /** Tracks held movement keys in a ref so per-frame reads never trigger re-renders. */
 export default function useMovementKeys() {
@@ -22,7 +27,7 @@ export default function useMovementKeys() {
   useEffect(() => {
     const setKey = (isDown: boolean) => (event: KeyboardEvent) => {
       const action = KEY_BINDINGS[event.code];
-      if (!action) return;
+      if (!action || isTyping(event)) return;
       event.preventDefault();
       pressed.current[action] = isDown;
     };

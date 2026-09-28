@@ -12,9 +12,11 @@ const WALK_BOB_RATE = 3;
 type Props = {
   avatar: Avatar;
   speedRef?: RefObject<number>;
+  /** Colors of items to show inside the cart. */
+  cartContents?: string[];
 };
 
-export default function ShopperModel({ avatar, speedRef }: Props) {
+export default function ShopperModel({ avatar, speedRef, cartContents = [] }: Props) {
   const body = BODY[avatar.body_type];
   const shoulderY = body.legHeight + body.torsoHeight;
   const headY = shoulderY + HEAD_RADIUS * 0.9;
@@ -72,7 +74,13 @@ export default function ShopperModel({ avatar, speedRef }: Props) {
         <Hat hat={avatar.hat} y={headY} />
       </group>
 
-      <Cart style={avatar.cart_style} color={avatar.cart_color} handleY={handleY} registerWheel={registerWheel} />
+      <Cart
+        style={avatar.cart_style}
+        color={avatar.cart_color}
+        handleY={handleY}
+        registerWheel={registerWheel}
+        contents={cartContents}
+      />
     </group>
   );
 }

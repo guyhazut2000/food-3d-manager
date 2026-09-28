@@ -9,6 +9,8 @@ from alembic import context
 
 import app.auth.models  # noqa: F401  registers models on Base.metadata
 import app.avatar.models  # noqa: F401
+import app.cart.models  # noqa: F401
+import app.products.models  # noqa: F401
 from app.core.config import DATABASE_URL
 from app.core.db import Base
 

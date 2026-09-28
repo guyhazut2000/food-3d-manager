@@ -16,17 +16,53 @@ type Props = {
   color: string;
   handleY: number;
   registerWheel: RegisterWheel;
+  contents: string[];
 };
 
-export default function Cart({ style, color, handleY, registerWheel }: Props) {
+export default function Cart({ style, color, handleY, registerWheel, contents }: Props) {
   return style === "basket" ? (
-    <HandBasket color={color} handleY={handleY} />
+    <HandBasket color={color} handleY={handleY} contents={contents} />
   ) : (
-    <WheeledCart racer={style === "racer"} color={color} handleY={handleY} registerWheel={registerWheel} />
+    <WheeledCart
+      racer={style === "racer"}
+      color={color}
+      handleY={handleY}
+      registerWheel={registerWheel}
+      contents={contents}
+    />
   );
 }
 
-function HandBasket({ color, handleY }: { color: string; handleY: number }) {
+const ITEM_SIZE = 0.13;
+
+/** Small boxes stacked in a grid of `columns` x `rows` per layer, centered on the origin. */
+function CartItems({ colors, columns, rows, spacing }: { colors: string[]; columns: number; rows: number; spacing: number }) {
+  const perLayer = columns * rows;
+  return (
+    <>
+      {colors.slice(0, perLayer * 2).map((itemColor, index) => {
+        const layer = Math.floor(index / perLayer);
+        const column = index % columns;
+        const row = Math.floor((index % perLayer) / columns);
+        return (
+          <mesh
+            key={index}
+            position={[
+              (column - (columns - 1) / 2) * spacing,
+              ITEM_SIZE / 2 + layer * ITEM_SIZE,
+              (row - (rows - 1) / 2) * spacing,
+            ]}
+          >
+            <boxGeometry args={[ITEM_SIZE, ITEM_SIZE, ITEM_SIZE]} />
+            <meshStandardMaterial color={itemColor} />
+          </mesh>
+        );
+      })}
+    </>
+  );
+}
+
+function HandBasket({ color, handleY, contents }: { color: string; handleY: number; contents: string[] }) {
   return (
     <group position={[0, handleY - 0.25, CART_REAR_Z + 0.1]}>
       <mesh castShadow>
@@ -37,6 +73,9 @@ function HandBasket({ color, handleY }: { color: string; handleY: number }) {
         <torusGeometry args={[0.15, 0.02, 8, 24, Math.PI]} />
         <meshStandardMaterial color={FRAME_COLOR} />
       </mesh>
+      <group position={[0, 0.14, 0]}>
+        <CartItems colors={contents} columns={3} rows={2} spacing={0.14} />
+      </group>
     </group>
   );
 }
@@ -46,9 +85,10 @@ type WheeledCartProps = {
   color: string;
   handleY: number;
   registerWheel: RegisterWheel;
+  contents: string[];
 };
 
-function WheeledCart({ racer, color, handleY, registerWheel }: WheeledCartProps) {
+function WheeledCart({ racer, color, handleY, registerWheel, contents }: WheeledCartProps) {
   const basket = racer ? BASKETS.racer : BASKETS.classic;
   const basketCenterZ = CART_REAR_Z + 0.1 + basket.depth / 2;
   const postHeight = handleY - basket.y;
@@ -69,6 +109,9 @@ function WheeledCart({ racer, color, handleY, registerWheel }: WheeledCartProps)
         <boxGeometry args={[basket.width, 0.03, basket.depth]} />
         <meshStandardMaterial color={color} />
       </mesh>
+      <group position={[0, basket.y - basket.height / 2 + 0.015, basketCenterZ]}>
+        <CartItems colors={contents} columns={3} rows={racer ? 6 : 4} spacing={0.16} />
+      </group>
       {racer ? (
         <mesh position={[0, basket.y + basket.height / 2 + 0.01, basketCenterZ]}>
           <boxGeometry args={[0.12, 0.02, basket.depth]} />
