@@ -1,9 +1,3 @@
-export type User = {
-  id: string;
-  username: string;
-  onboarded: boolean;
-};
-
 export const BODY_TYPES = ["round", "tall", "small"] as const;
 export const HATS = ["cap", "beanie", "chef"] as const;
 export const CART_STYLES = ["classic", "basket", "racer"] as const;

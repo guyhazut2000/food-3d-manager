@@ -1,4 +1,3 @@
-import asyncio
 import os
 
 os.environ["DATABASE_URL"] = os.getenv(
@@ -9,17 +8,10 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlalchemy.pool import NullPool
 
-from app.config import DATABASE_URL
-from app.db import get_db
+from app.core.db import get_db
 from app.main import app
-
-# NullPool: each TestClient runs its own event loop, so connections must not be reused across loops.
-test_engine = create_async_engine(DATABASE_URL, poolclass=NullPool)
-TestSessionLocal = async_sessionmaker(test_engine, expire_on_commit=False)
+from tests.db import TestSessionLocal, run_sql
 
 
 async def override_get_db():
@@ -28,15 +20,6 @@ async def override_get_db():
 
 
 app.dependency_overrides[get_db] = override_get_db
-
-
-def run_sql(sql: str):
-    async def _run():
-        async with test_engine.begin() as conn:
-            result = await conn.execute(text(sql))
-            return result.all() if result.returns_rows else None
-
-    return asyncio.run(_run())
 
 
 @pytest.fixture(scope="session", autouse=True)

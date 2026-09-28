@@ -3,9 +3,10 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy.dialects.postgresql import insert
 
-from app.deps import CurrentUser, DbSession
-from app.models import Avatar
-from app.schemas import AvatarIn, AvatarOut
+from app.auth.dependencies import CurrentUser
+from app.avatar.models import Avatar
+from app.avatar.schemas import AvatarIn, AvatarOut
+from app.core.db import DbSession
 
 router = APIRouter(prefix="/avatar", tags=["avatar"])
 

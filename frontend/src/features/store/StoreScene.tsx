@@ -1,7 +1,7 @@
 import { Canvas } from "@react-three/fiber";
 import Player from "./Player";
-import { SHELVES, STORE_HALF_SIZE } from "../lib/storeLayout";
-import type { Avatar } from "../types";
+import { SHELVES, STORE_HALF_SIZE } from "./storeLayout";
+import type { Avatar } from "../avatar/types";
 
 const PRODUCT_COLORS = ["#ef4444", "#f59e0b", "#22c55e", "#3b82f6", "#a855f7", "#ec4899"];
 

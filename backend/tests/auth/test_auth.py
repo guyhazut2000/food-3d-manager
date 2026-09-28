@@ -3,7 +3,7 @@ import asyncio
 import httpx2
 
 from app.main import app
-from tests.conftest import run_sql
+from tests.db import run_sql
 
 CREDENTIALS = {"username": "Guy_1", "password": "password123"}
 

@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import CORS_ORIGINS
-from app.routers import auth, avatar
+from app.auth.router import router as auth_router
+from app.avatar.router import router as avatar_router
+from app.core.config import CORS_ORIGINS
 
 app = FastAPI(title="food-3d-manager API")
 
@@ -14,8 +15,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
-app.include_router(avatar.router)
+app.include_router(auth_router)
+app.include_router(avatar_router)
 
 
 @app.get("/health")

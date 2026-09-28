@@ -2,9 +2,13 @@ import { useRef, useState, type ReactNode } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { ContactShadows } from "@react-three/drei";
 import type { Group } from "three";
-import ShopperModel from "./avatar/ShopperModel";
-import { api } from "../lib/api";
-import { BODY_TYPES, CART_STYLES, HATS, type Avatar } from "../types";
+import { avatarApi } from "./avatarApi";
+import ShopperModel from "./model/ShopperModel";
+import { Choices, Field, Swatches } from "./OptionPickers";
+import { describeError } from "../../shared/api/client";
+import Button from "../../shared/ui/Button";
+import ErrorMessage from "../../shared/ui/ErrorMessage";
+import { BODY_TYPES, CART_STYLES, HATS, type Avatar } from "./types";
 
 const SKIN_COLORS = ["#fde7d0", "#f1c27d", "#c68642", "#8d5524", "#5c3a1e"];
 const PALETTE = ["#2563eb", "#dc2626", "#16a34a", "#f59e0b", "#9333ea", "#ec4899", "#0f172a", "#f8fafc"];
@@ -27,9 +31,9 @@ export default function Onboarding({ username, initialAvatar, onSaved }: Props) 
     setSaving(true);
     setError(null);
     try {
-      onSaved(await api.saveAvatar(avatar));
+      onSaved(await avatarApi.save(avatar));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save your avatar.");
+      setError(describeError(err, "Could not save your avatar."));
       setSaving(false);
     }
   }
@@ -80,15 +84,11 @@ export default function Onboarding({ username, initialAvatar, onSaved }: Props) 
           <Swatches colors={PALETTE} value={avatar.cart_color} onChange={(v) => update("cart_color", v)} />
         </Field>
 
-        {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+        <ErrorMessage message={error} />
 
-        <button
-          onClick={save}
-          disabled={saving}
-          className="w-full rounded-lg bg-emerald-600 py-3 font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
-        >
+        <Button onClick={save} disabled={saving} className="py-3">
           {saving ? "Saving…" : "Save & enter store →"}
-        </button>
+        </Button>
       </aside>
     </main>
   );
@@ -100,71 +100,4 @@ function Turntable({ children }: { children: ReactNode }) {
     if (group.current) group.current.rotation.y += delta * 0.5;
   });
   return <group ref={group} position={[0, 0, -0.6]}>{children}</group>;
-}
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div>
-      <h2 className="mb-2 text-sm font-semibold text-zinc-700">{label}</h2>
-      {children}
-    </div>
-  );
-}
-
-function Choices<T extends string>({
-  options,
-  value,
-  onChange,
-}: {
-  options: readonly T[];
-  value: T;
-  onChange: (value: T) => void;
-}) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {options.map((option) => (
-        <button
-          key={option}
-          type="button"
-          onClick={() => onChange(option)}
-          aria-pressed={option === value}
-          className={`rounded-full border px-4 py-1.5 text-sm capitalize ${
-            option === value
-              ? "border-emerald-600 bg-emerald-600 text-white"
-              : "border-zinc-300 text-zinc-700 hover:border-emerald-500"
-          }`}
-        >
-          {option}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function Swatches({
-  colors,
-  value,
-  onChange,
-}: {
-  colors: string[];
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {colors.map((color) => (
-        <button
-          key={color}
-          type="button"
-          onClick={() => onChange(color)}
-          aria-label={color}
-          aria-pressed={color.toLowerCase() === value.toLowerCase()}
-          className={`h-8 w-8 rounded-full border-2 ${
-            color.toLowerCase() === value.toLowerCase() ? "border-emerald-600 ring-2 ring-emerald-300" : "border-zinc-200"
-          }`}
-          style={{ backgroundColor: color }}
-        />
-      ))}
-    </div>
-  );
 }
