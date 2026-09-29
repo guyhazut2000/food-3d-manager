@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { formatMoney } from "../../shared/money";
+import Button from "../../shared/ui/Button";
 import ErrorMessage from "../../shared/ui/ErrorMessage";
 import type { Cart } from "./types";
 
@@ -8,9 +9,10 @@ type Props = {
   error: string | null;
   onSetQuantity: (productId: number, quantity: number) => void;
   onRemove: (productId: number) => void;
+  onCheckout: () => void;
 };
 
-export default function CartHud({ cart, error, onSetQuantity, onRemove }: Props) {
+export default function CartHud({ cart, error, onSetQuantity, onRemove, onCheckout }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -72,6 +74,14 @@ export default function CartHud({ cart, error, onSetQuantity, onRemove }: Props)
               </div>
             ))
           )}
+        </div>
+      ) : null}
+
+      {cart.items.length > 0 ? (
+        <div className="px-4 pb-3">
+          <Button onClick={onCheckout} className="py-2 text-sm">
+            Checkout · {formatMoney(cart.total)}
+          </Button>
         </div>
       ) : null}
 

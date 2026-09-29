@@ -24,15 +24,15 @@ class CartLine:
     totals: LineTotal
 
 
-async def get_cart(db: AsyncSession, user_id: uuid.UUID) -> list[CartLine]:
-    items = (
-        await db.scalars(
-            select(CartItem)
-            .where(CartItem.user_id == user_id)
-            .options(selectinload(CartItem.product))
-            .order_by(CartItem.added_at)
-        )
-    ).all()
+async def get_cart(db: AsyncSession, user_id: uuid.UUID, lock: bool = False) -> list[CartLine]:
+    """Current cart with live prices. `lock=True` row-locks the items until the transaction ends (for checkout)."""
+    query = (
+        select(CartItem)
+        .where(CartItem.user_id == user_id)
+        .options(selectinload(CartItem.product))
+        .order_by(CartItem.added_at)
+    )
+    items = (await db.scalars(query.with_for_update(of=CartItem) if lock else query)).all()
     prices = await current_prices(db, [item.product_id for item in items])
     return [
         CartLine(item.product, item.quantity, price, line_total(price, item.quantity))

@@ -2,24 +2,37 @@ import { useRef, type RefObject } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import type { Avatar } from "../avatar/types";
 import type { Product } from "../products/types";
+import CheckoutCounter from "./CheckoutCounter";
+import { NOTHING_NEARBY, type Nearby } from "./nearby";
 import { cameraLookTarget, cameraPositionBehind, cartFrontPoint, type PlayerPose } from "./movement";
 import Player from "./Player";
 import ProductShelves from "./ProductShelves";
-import { nearestSlot, SPAWN, STORE_HALF_SIZE, type ProductSlot } from "./storeLayout";
+import { isNearCheckout, nearestSlot, SPAWN, STORE_HALF_SIZE, type ProductSlot } from "./storeLayout";
 
 const PICK_REACH = 2.6;
+const CHECKOUT_REACH = 1.2;
 
 type Props = {
   avatar: Avatar;
   slots: ProductSlot[];
-  nearestSlotIndex: number | null;
+  nearby: Nearby;
   frozen: boolean;
   cartContents: string[];
-  onSelect: (product: Product) => void;
-  onNearestChange: (slotIndex: number | null) => void;
+  onSelectProduct: (product: Product) => void;
+  onOpenCheckout: () => void;
+  onNearbyChange: (nearby: Nearby) => void;
 };
 
-export default function StoreScene({ avatar, slots, nearestSlotIndex, frozen, cartContents, onSelect, onNearestChange }: Props) {
+export default function StoreScene({
+  avatar,
+  slots,
+  nearby,
+  frozen,
+  cartContents,
+  onSelectProduct,
+  onOpenCheckout,
+  onNearbyChange,
+}: Props) {
   const pose = useRef<PlayerPose>({ ...SPAWN });
 
   return (
@@ -39,9 +52,10 @@ export default function StoreScene({ avatar, slots, nearestSlotIndex, frozen, ca
         <meshStandardMaterial color="#e5e7eb" />
       </mesh>
 
-      <ProductShelves slots={slots} nearestSlotIndex={nearestSlotIndex} onSelect={onSelect} />
+      <ProductShelves slots={slots} nearestSlotIndex={nearby.slotIndex} onSelect={onSelectProduct} />
+      <CheckoutCounter near={nearby.checkout} onOpen={onOpenCheckout} />
       <Player avatar={avatar} pose={pose} frozen={frozen} cartContents={cartContents} />
-      <ProximityTracker pose={pose} slots={slots} onNearestChange={onNearestChange} />
+      <ProximityTracker pose={pose} slots={slots} onNearbyChange={onNearbyChange} />
     </Canvas>
   );
 }
@@ -49,20 +63,23 @@ export default function StoreScene({ avatar, slots, nearestSlotIndex, frozen, ca
 type ProximityProps = {
   pose: RefObject<PlayerPose>;
   slots: ProductSlot[];
-  onNearestChange: (slotIndex: number | null) => void;
+  onNearbyChange: (nearby: Nearby) => void;
 };
 
-/** Checks the nearest product every frame but only reports when it changes, to avoid re-rendering per frame. */
-function ProximityTracker({ pose, slots, onNearestChange }: ProximityProps) {
-  const lastReported = useRef<number | null>(null);
+/** Checks what's in reach every frame but only reports when it changes, to avoid re-rendering per frame. */
+function ProximityTracker({ pose, slots, onNearbyChange }: ProximityProps) {
+  const lastReported = useRef<Nearby>(NOTHING_NEARBY);
 
   useFrame(() => {
     const front = cartFrontPoint(pose.current);
-    const nearest = nearestSlot(slots, front.x, front.z, PICK_REACH);
-    const nearestIndex = nearest ? slots.indexOf(nearest) : null;
-    if (nearestIndex !== lastReported.current) {
-      lastReported.current = nearestIndex;
-      onNearestChange(nearestIndex);
+    const checkout = isNearCheckout(front.x, front.z, CHECKOUT_REACH);
+    const nearest = checkout ? null : nearestSlot(slots, front.x, front.z, PICK_REACH);
+    const slotIndex = nearest ? slots.indexOf(nearest) : null;
+
+    const last = lastReported.current;
+    if (slotIndex !== last.slotIndex || checkout !== last.checkout) {
+      lastReported.current = { slotIndex, checkout };
+      onNearbyChange(lastReported.current);
     }
   });
 

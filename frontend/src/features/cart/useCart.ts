@@ -30,5 +30,6 @@ export default function useCart() {
     add: (productId: number, quantity: number) => apply(cartApi.add(productId, quantity)),
     setQuantity: (productId: number, quantity: number) => apply(cartApi.setQuantity(productId, quantity)),
     remove: (productId: number) => apply(cartApi.remove(productId)),
+    reload: () => apply(cartApi.get()),
   };
 }

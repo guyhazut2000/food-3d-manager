@@ -20,6 +20,9 @@ export const SHELVES: Shelf[] = [-7.5, -2.5, 2.5, 7.5].map((x, index) => ({
 
 export const SPAWN = { x: 0, z: 11, heading: Math.PI };
 
+/** Checkout counter near the entrance; `width` runs along x, `depth` along z. */
+export const CHECKOUT_COUNTER = { x: 4.5, z: 9.5, width: 1.2, depth: 3, height: 0.9 };
+
 /** Heights of the shelf boards products stand on. */
 export const TIER_HEIGHTS = [0.12, 0.7, 1.28];
 export const LABEL_HEIGHT = 2.05;
@@ -31,10 +34,17 @@ export function isBlocked(x: number, z: number, radius: number): boolean {
   const limit = STORE_HALF_SIZE - WALL_MARGIN - radius;
   if (Math.abs(x) > limit || Math.abs(z) > limit) return true;
 
-  return SHELVES.some(
-    (shelf) =>
-      Math.abs(x - shelf.x) < shelf.width / 2 + radius && Math.abs(z - shelf.z) < shelf.depth / 2 + radius,
+  return [...SHELVES, CHECKOUT_COUNTER].some(
+    (obstacle) =>
+      Math.abs(x - obstacle.x) < obstacle.width / 2 + radius && Math.abs(z - obstacle.z) < obstacle.depth / 2 + radius,
   );
+}
+
+/** Whether a point on the floor is within reach of the checkout counter's edge. */
+export function isNearCheckout(x: number, z: number, reach: number): boolean {
+  const dx = Math.max(Math.abs(x - CHECKOUT_COUNTER.x) - CHECKOUT_COUNTER.width / 2, 0);
+  const dz = Math.max(Math.abs(z - CHECKOUT_COUNTER.z) - CHECKOUT_COUNTER.depth / 2, 0);
+  return Math.hypot(dx, dz) < reach;
 }
 
 /** Gives each product a column on both faces of its category's shelf, so it can be reached from either aisle. */

@@ -36,7 +36,10 @@ def migrated_database():
 @pytest.fixture(autouse=True)
 def clean_tables():
     yield
-    run_sql("TRUNCATE users, sessions, avatars, products, product_prices, cart_items RESTART IDENTITY CASCADE")
+    run_sql(
+        "TRUNCATE users, sessions, avatars, products, product_prices, cart_items, trips, trip_items "
+        "RESTART IDENTITY CASCADE"
+    )
 
 
 @pytest.fixture

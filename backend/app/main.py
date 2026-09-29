@@ -6,6 +6,7 @@ from app.avatar.router import router as avatar_router
 from app.cart.router import router as cart_router
 from app.core.config import CORS_ORIGINS
 from app.products.router import router as products_router
+from app.trips.router import router as trips_router
 
 app = FastAPI(title="food-3d-manager API")
 
@@ -21,6 +22,7 @@ app.include_router(auth_router)
 app.include_router(avatar_router)
 app.include_router(products_router)
 app.include_router(cart_router)
+app.include_router(trips_router)
 
 
 @app.get("/health")
