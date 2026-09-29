@@ -13,10 +13,16 @@ const BOARD_THICKNESS = 0.04;
 type Props = {
   slots: ProductSlot[];
   nearestSlotIndex: number | null;
+  productIdsInReach: number[];
   onSelect: (product: Product) => void;
 };
 
-export default function ProductShelves({ slots, nearestSlotIndex, onSelect }: Props) {
+function labelHint(isNearest: boolean, inReach: boolean): string {
+  if (isNearest) return "press E";
+  return inReach ? "click" : "too far — walk closer";
+}
+
+export default function ProductShelves({ slots, nearestSlotIndex, productIdsInReach, onSelect }: Props) {
   const [hoveredSlotIndex, setHoveredSlotIndex] = useState<number | null>(null);
   const activeSlotIndex = hoveredSlotIndex ?? nearestSlotIndex;
   const activeSlot = activeSlotIndex === null ? null : slots[activeSlotIndex];
@@ -45,7 +51,8 @@ export default function ProductShelves({ slots, nearestSlotIndex, onSelect }: Pr
             <div className="text-sm font-semibold">{activeSlot.product.name}</div>
             <div className="text-xs">
               {formatMoney(activeSlot.product.price.unit)}
-              {activeSlotIndex === nearestSlotIndex ? " · press E" : " · click"}
+              {" · "}
+              {labelHint(activeSlotIndex === nearestSlotIndex, productIdsInReach.includes(activeSlot.product.id))}
             </div>
           </div>
         </Html>

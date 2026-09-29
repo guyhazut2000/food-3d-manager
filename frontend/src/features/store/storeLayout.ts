@@ -65,16 +65,15 @@ export function layoutProducts(products: Product[]): ProductSlot[] {
   });
 }
 
-/** Nearest product within reach of a point on the floor, or null. */
-export function nearestSlot(slots: ProductSlot[], x: number, z: number, reach: number): ProductSlot | null {
-  let nearest: ProductSlot | null = null;
-  let nearestDistance = reach;
-  for (const slot of slots) {
-    const distance = Math.hypot(slot.x - x, slot.z - z);
-    if (distance < nearestDistance) {
-      nearest = slot;
-      nearestDistance = distance;
-    }
-  }
-  return nearest;
+function distanceToSlot(slot: ProductSlot, x: number, z: number): number {
+  return Math.hypot(slot.x - x, slot.z - z);
+}
+
+/** Slots within reach of a point on the floor, nearest first. */
+export function slotsInReach(slots: ProductSlot[], x: number, z: number, reach: number): ProductSlot[] {
+  return slots
+    .map((slot) => ({ slot, distance: distanceToSlot(slot, x, z) }))
+    .filter(({ distance }) => distance < reach)
+    .sort((a, b) => a.distance - b.distance)
+    .map(({ slot }) => slot);
 }

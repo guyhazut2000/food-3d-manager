@@ -15,6 +15,7 @@ import StoreScene from "./StoreScene";
 import { layoutProducts } from "./storeLayout";
 
 const MAX_ITEMS_SHOWN_IN_CART = 36;
+const NOTICE_DURATION_MS = 2500;
 
 type Overlay = { kind: "product"; product: Product } | { kind: "checkout" } | { kind: "trips" } | null;
 
@@ -30,6 +31,7 @@ export default function StoreScreen({ user, avatar, onEditAvatar, onLogout }: Pr
   const [loadError, setLoadError] = useState<string | null>(null);
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [nearby, setNearby] = useState<Nearby>(NOTHING_NEARBY);
+  const [notice, setNotice] = useState<string | null>(null);
   const { cart, error: cartError, add, setQuantity, remove, reload: reloadCart } = useCart();
 
   useEffect(() => {
@@ -45,6 +47,18 @@ export default function StoreScreen({ user, avatar, onEditAvatar, onLogout }: Pr
     () => cart.items.flatMap((line) => Array<string>(line.quantity).fill(line.color)).slice(0, MAX_ITEMS_SHOWN_IN_CART),
     [cart.items],
   );
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(null), NOTICE_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [notice]);
+
+  /** Products can only be picked (by click or E) when the cart is within reach of them. */
+  const pickProduct = (product: Product) => {
+    if (nearby.productIdsInReach.includes(product.id)) setOverlay({ kind: "product", product });
+    else setNotice(`Too far to reach ${product.name} — push your cart up to the shelf.`);
+  };
 
   const openCheckout = useCallback(() => setOverlay({ kind: "checkout" }), []);
   const closeOverlay = useCallback(() => setOverlay(null), []);
@@ -67,7 +81,7 @@ export default function StoreScreen({ user, avatar, onEditAvatar, onLogout }: Pr
         nearby={overlay ? NOTHING_NEARBY : nearby}
         frozen={overlay !== null}
         cartContents={cartContents}
-        onSelectProduct={(product) => setOverlay({ kind: "product", product })}
+        onSelectProduct={pickProduct}
         onOpenCheckout={openCheckout}
         onNearbyChange={setNearby}
       />
@@ -94,6 +108,15 @@ export default function StoreScreen({ user, avatar, onEditAvatar, onLogout }: Pr
         <div className="absolute left-1/2 top-20 -translate-x-1/2">
           <ErrorMessage message={loadError} />
         </div>
+      ) : null}
+
+      {notice ? (
+        <p
+          role="status"
+          className="absolute left-1/2 top-20 -translate-x-1/2 rounded-full bg-amber-100 px-4 py-2 text-sm font-medium text-amber-900 shadow"
+        >
+          🛒 {notice}
+        </p>
       ) : null}
 
       {overlay?.kind === "product" ? (

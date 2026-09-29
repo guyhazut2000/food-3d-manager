@@ -3,14 +3,11 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import type { Avatar } from "../avatar/types";
 import type { Product } from "../products/types";
 import CheckoutCounter from "./CheckoutCounter";
-import { NOTHING_NEARBY, type Nearby } from "./nearby";
+import { CHECKOUT_REACH, NOTHING_NEARBY, PICK_REACH, sameNearby, type Nearby } from "./nearby";
 import { cameraLookTarget, cameraPositionBehind, cartFrontPoint, type PlayerPose } from "./movement";
 import Player from "./Player";
 import ProductShelves from "./ProductShelves";
-import { isNearCheckout, nearestSlot, SPAWN, STORE_HALF_SIZE, type ProductSlot } from "./storeLayout";
-
-const PICK_REACH = 2.6;
-const CHECKOUT_REACH = 1.2;
+import { isNearCheckout, slotsInReach, SPAWN, STORE_HALF_SIZE, type ProductSlot } from "./storeLayout";
 
 type Props = {
   avatar: Avatar;
@@ -52,7 +49,12 @@ export default function StoreScene({
         <meshStandardMaterial color="#e5e7eb" />
       </mesh>
 
-      <ProductShelves slots={slots} nearestSlotIndex={nearby.slotIndex} onSelect={onSelectProduct} />
+      <ProductShelves
+        slots={slots}
+        nearestSlotIndex={nearby.slotIndex}
+        productIdsInReach={nearby.productIdsInReach}
+        onSelect={onSelectProduct}
+      />
       <CheckoutCounter near={nearby.checkout} onOpen={onOpenCheckout} />
       <Player avatar={avatar} pose={pose} frozen={frozen} cartContents={cartContents} />
       <ProximityTracker pose={pose} slots={slots} onNearbyChange={onNearbyChange} />
@@ -73,13 +75,16 @@ function ProximityTracker({ pose, slots, onNearbyChange }: ProximityProps) {
   useFrame(() => {
     const front = cartFrontPoint(pose.current);
     const checkout = isNearCheckout(front.x, front.z, CHECKOUT_REACH);
-    const nearest = checkout ? null : nearestSlot(slots, front.x, front.z, PICK_REACH);
-    const slotIndex = nearest ? slots.indexOf(nearest) : null;
+    const inReach = slotsInReach(slots, front.x, front.z, PICK_REACH);
+    const nearby: Nearby = {
+      slotIndex: checkout || inReach.length === 0 ? null : slots.indexOf(inReach[0]),
+      checkout,
+      productIdsInReach: [...new Set(inReach.map((slot) => slot.product.id))].sort((a, b) => a - b),
+    };
 
-    const last = lastReported.current;
-    if (slotIndex !== last.slotIndex || checkout !== last.checkout) {
-      lastReported.current = { slotIndex, checkout };
-      onNearbyChange(lastReported.current);
+    if (!sameNearby(nearby, lastReported.current)) {
+      lastReported.current = nearby;
+      onNearbyChange(nearby);
     }
   });
 
